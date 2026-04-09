@@ -1,0 +1,22 @@
+{
+  "name": "NupDrive - Gestão de Frota",
+  "short_name": "NupDrive",
+  "description": "Sistema de gestão de motoristas e frota pela ANUP",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#7c3aed",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
