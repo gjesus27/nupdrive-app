@@ -273,6 +273,44 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          criado_em: string
+          dados: Json | null
+          id: string
+          lida: boolean
+          mensagem: string
+          tipo: string
+          usuario_id: string
+        }
+        Insert: {
+          criado_em?: string
+          dados?: Json | null
+          id?: string
+          lida?: boolean
+          mensagem: string
+          tipo?: string
+          usuario_id: string
+        }
+        Update: {
+          criado_em?: string
+          dados?: Json | null
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          tipo?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           ativo: boolean
