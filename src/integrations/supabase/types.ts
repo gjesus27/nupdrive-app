@@ -14,13 +14,370 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      abastecimentos: {
+        Row: {
+          corrida_id: string | null
+          criado_em: string
+          id: string
+          km: number
+          motorista_id: string
+          url_nota: string | null
+          valor: number
+          veiculo_id: string
+        }
+        Insert: {
+          corrida_id?: string | null
+          criado_em?: string
+          id?: string
+          km: number
+          motorista_id: string
+          url_nota?: string | null
+          valor: number
+          veiculo_id: string
+        }
+        Update: {
+          corrida_id?: string | null
+          criado_em?: string
+          id?: string
+          km?: number
+          motorista_id?: string
+          url_nota?: string | null
+          valor?: number
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abastecimentos_corrida_id_fkey"
+            columns: ["corrida_id"]
+            isOneToOne: false
+            referencedRelation: "corridas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abastecimentos_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abastecimentos_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklists: {
+        Row: {
+          criado_em: string
+          id: string
+          itens: Json
+          motorista_id: string
+          observacao: string | null
+          veiculo_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          itens?: Json
+          motorista_id: string
+          observacao?: string | null
+          veiculo_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          itens?: Json
+          motorista_id?: string
+          observacao?: string | null
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklists_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      corridas: {
+        Row: {
+          admin_dirigindo: boolean | null
+          criado_em: string
+          destino: string | null
+          fim_lat: number | null
+          fim_lng: number | null
+          finalizada_em: string | null
+          id: string
+          inicio_lat: number | null
+          inicio_lng: number | null
+          km_fim: number | null
+          km_inicio: number
+          motorista_id: string
+          observacoes: string | null
+          observacoes_final: string | null
+          status: string
+          veiculo_id: string
+        }
+        Insert: {
+          admin_dirigindo?: boolean | null
+          criado_em?: string
+          destino?: string | null
+          fim_lat?: number | null
+          fim_lng?: number | null
+          finalizada_em?: string | null
+          id?: string
+          inicio_lat?: number | null
+          inicio_lng?: number | null
+          km_fim?: number | null
+          km_inicio: number
+          motorista_id: string
+          observacoes?: string | null
+          observacoes_final?: string | null
+          status?: string
+          veiculo_id: string
+        }
+        Update: {
+          admin_dirigindo?: boolean | null
+          criado_em?: string
+          destino?: string | null
+          fim_lat?: number | null
+          fim_lng?: number | null
+          finalizada_em?: string | null
+          id?: string
+          inicio_lat?: number | null
+          inicio_lng?: number | null
+          km_fim?: number | null
+          km_inicio?: number
+          motorista_id?: string
+          observacoes?: string | null
+          observacoes_final?: string | null
+          status?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corridas_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corridas_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fotos: {
+        Row: {
+          corrida_id: string
+          criado_em: string
+          id: string
+          motorista_id: string
+          posicao: string
+          tipo: string
+          url: string
+        }
+        Insert: {
+          corrida_id: string
+          criado_em?: string
+          id?: string
+          motorista_id: string
+          posicao: string
+          tipo: string
+          url: string
+        }
+        Update: {
+          corrida_id?: string
+          criado_em?: string
+          id?: string
+          motorista_id?: string
+          posicao?: string
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fotos_corrida_id_fkey"
+            columns: ["corrida_id"]
+            isOneToOne: false
+            referencedRelation: "corridas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fotos_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      localizacoes: {
+        Row: {
+          corrida_id: string
+          criado_em: string
+          id: string
+          lat: number
+          lng: number
+          motorista_id: string
+          velocidade: number | null
+        }
+        Insert: {
+          corrida_id: string
+          criado_em?: string
+          id?: string
+          lat: number
+          lng: number
+          motorista_id: string
+          velocidade?: number | null
+        }
+        Update: {
+          corrida_id?: string
+          criado_em?: string
+          id?: string
+          lat?: number
+          lng?: number
+          motorista_id?: string
+          velocidade?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "localizacoes_corrida_id_fkey"
+            columns: ["corrida_id"]
+            isOneToOne: false
+            referencedRelation: "corridas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "localizacoes_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuarios: {
+        Row: {
+          ativo: boolean
+          criado_em: string
+          email: string
+          id: string
+          nome: string
+          pode_dirigir: boolean
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean
+          criado_em?: string
+          email: string
+          id: string
+          nome: string
+          pode_dirigir?: boolean
+          tipo?: string
+        }
+        Update: {
+          ativo?: boolean
+          criado_em?: string
+          email?: string
+          id?: string
+          nome?: string
+          pode_dirigir?: boolean
+          tipo?: string
+        }
+        Relationships: []
+      }
+      veiculos: {
+        Row: {
+          criado_em: string
+          id: string
+          km_atual: number
+          nome: string
+          placa: string
+          status: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          km_atual?: number
+          nome: string
+          placa: string
+          status?: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          km_atual?: number
+          nome?: string
+          placa?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      zona_azul: {
+        Row: {
+          corrida_id: string | null
+          criado_em: string
+          id: string
+          localizacao: string | null
+          motorista_id: string
+          valor: number
+        }
+        Insert: {
+          corrida_id?: string | null
+          criado_em?: string
+          id?: string
+          localizacao?: string | null
+          motorista_id: string
+          valor: number
+        }
+        Update: {
+          corrida_id?: string | null
+          criado_em?: string
+          id?: string
+          localizacao?: string | null
+          motorista_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zona_azul_corrida_id_fkey"
+            columns: ["corrida_id"]
+            isOneToOne: false
+            referencedRelation: "corridas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zona_azul_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
