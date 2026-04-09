@@ -1,5 +1,6 @@
-import { Car, LogOut, Menu, X, LayoutDashboard, Users, Fuel } from 'lucide-react';
+import { Car, LogOut, Menu, X, LayoutDashboard, Users, Fuel, Car as CarIcon, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { NotificationPanel } from '@/components/NotificationPanel';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,9 +17,9 @@ export function AppHeader() {
     ...(isAdmin ? [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
       { label: 'Usuários', icon: Users, path: '/admin/usuarios' },
+      { label: 'Veículos Gestão', icon: CarIcon, path: '/admin/veiculos' },
     ] : []),
     { label: 'Veículos', icon: Car, path: '/veiculos' },
-    { label: 'Abastecimentos', icon: Fuel, path: '/abastecimentos' },
   ];
 
   return (
@@ -28,10 +29,11 @@ export function AppHeader() {
           <Car className="h-6 w-6 text-primary-foreground" />
           <h1 className="text-lg font-bold text-primary-foreground">NupDrive</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-primary-foreground/80 hidden sm:block">
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-primary-foreground/80 hidden sm:block mr-2">
             {profile?.nome}
           </span>
+          <NotificationPanel />
           <Button
             variant="ghost"
             size="icon"

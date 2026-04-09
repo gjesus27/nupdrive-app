@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { AppHeader } from '@/components/AppHeader';
+import { TrackingMap } from '@/components/TrackingMap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Camera, MapPin, Fuel, ParkingCircle, Flag, Navigation } from 'lucide-react';
+import { Camera, Fuel, ParkingCircle, Flag, Navigation } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -17,6 +19,7 @@ type FotoPosition = 'frente' | 'traseira' | 'lado_direito' | 'lado_esquerdo';
 export default function CorridaPage() {
   const { veiculoId } = useParams();
   const { profile } = useAuth();
+  const { addNotification } = useNotifications();
   const navigate = useNavigate();
 
   const [corridaId, setCorridaId] = useState<string | null>(null);
@@ -30,13 +33,12 @@ export default function CorridaPage() {
   const [kmFim, setKmFim] = useState('');
   const [obsFinal, setObsFinal] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentPos, setCurrentPos] = useState<[number, number] | undefined>();
+  const [trackRoute, setTrackRoute] = useState<[number, number][]>([]);
 
-  // Abastecimento modal
   const [showAbast, setShowAbast] = useState(false);
   const [abastValor, setAbastValor] = useState('');
   const [abastKm, setAbastKm] = useState('');
-
-  // Zona Azul modal
   const [showZona, setShowZona] = useState(false);
   const [zonaValor, setZonaValor] = useState('');
   const [zonaLocal, setZonaLocal] = useState('');
@@ -66,14 +68,17 @@ export default function CorridaPage() {
         pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 }));
       } catch {}
 
+      const startLat = pos?.coords.latitude;
+      const startLng = pos?.coords.longitude;
+
       const { data, error } = await supabase.from('corridas').insert({
         motorista_id: profile!.id,
         veiculo_id: veiculoId,
         km_inicio: Number(kmInicio),
         destino,
         observacoes,
-        inicio_lat: pos?.coords.latitude,
-        inicio_lng: pos?.coords.longitude,
+        inicio_lat: startLat,
+        inicio_lng: startLng,
         status: 'em_andamento',
         admin_dirigindo: profile!.tipo === 'admin',
       }).select().single();
@@ -81,21 +86,27 @@ export default function CorridaPage() {
       if (error) throw error;
       setCorridaId(data.id);
 
-      // Save initial photos
-      for (const [pos, url] of Object.entries(fotosInicio)) {
+      if (startLat && startLng) {
+        setCurrentPos([startLat, startLng]);
+        setTrackRoute([[startLat, startLng]]);
+      }
+
+      for (const [p, url] of Object.entries(fotosInicio)) {
         if (url) {
           await supabase.from('fotos').insert({
             corrida_id: data.id,
             motorista_id: profile!.id,
             tipo: 'inicio',
-            posicao: pos,
+            posicao: p,
             url,
           });
         }
       }
 
-      // Update vehicle status
       await supabase.from('veiculos').update({ status: 'em_uso', km_atual: Number(kmInicio) }).eq('id', veiculoId);
+
+      // Notify admins
+      addNotification('corrida', `🚗 ${profile!.nome} iniciou uma corrida${destino ? ` para ${destino}` : ''}`);
 
       setStep('em_andamento');
       startTracking(data.id);
@@ -113,11 +124,15 @@ export default function CorridaPage() {
         const pos = await new Promise<GeolocationPosition>((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 })
         );
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCurrentPos([lat, lng]);
+        setTrackRoute(prev => [...prev, [lat, lng]]);
+
         await supabase.from('localizacoes').insert({
           corrida_id: cId,
           motorista_id: profile!.id,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+          lat, lng,
           velocidade: pos.coords.speed,
         });
       } catch {}
@@ -145,6 +160,8 @@ export default function CorridaPage() {
 
       await supabase.from('veiculos').update({ status: 'disponivel', km_atual: Number(kmFim) }).eq('id', veiculoId);
 
+      addNotification('corrida', `✅ ${profile!.nome} finalizou a corrida • ${Number(kmFim) - Number(kmInicio)} km percorridos`);
+
       if (trackingRef.current) clearInterval(trackingRef.current);
       toast.success('Corrida finalizada!');
       navigate('/veiculos');
@@ -164,6 +181,7 @@ export default function CorridaPage() {
         valor: Number(abastValor),
         km: Number(abastKm),
       });
+      addNotification('abastecimento', `⛽ ${profile!.nome} abasteceu • R$ ${Number(abastValor).toFixed(2)}`);
       toast.success('Abastecimento registrado!');
       setShowAbast(false);
       setAbastValor('');
@@ -182,6 +200,7 @@ export default function CorridaPage() {
         valor: Number(zonaValor),
         localizacao: zonaLocal,
       });
+      addNotification('zona_azul', `🅿️ ${profile!.nome} registrou zona azul • R$ ${Number(zonaValor).toFixed(2)}`);
       toast.success('Zona azul registrada!');
       setShowZona(false);
       setZonaValor('');
@@ -192,6 +211,10 @@ export default function CorridaPage() {
   };
 
   useEffect(() => {
+    // Get initial position
+    navigator.geolocation?.getCurrentPosition((pos) => {
+      setCurrentPos([pos.coords.latitude, pos.coords.longitude]);
+    });
     return () => {
       if (trackingRef.current) clearInterval(trackingRef.current);
     };
@@ -229,6 +252,18 @@ export default function CorridaPage() {
                 <Label>Observações</Label>
                 <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} placeholder="Observações iniciais..." rows={3} />
               </div>
+
+              {currentPos && (
+                <div className="space-y-2">
+                  <Label>Sua localização</Label>
+                  <TrackingMap
+                    center={currentPos}
+                    zoom={15}
+                    currentPosition={currentPos}
+                    height="200px"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -291,6 +326,18 @@ export default function CorridaPage() {
             </CardContent>
           </Card>
 
+          {/* Live Map */}
+          <TrackingMap
+            center={currentPos}
+            zoom={14}
+            currentPosition={currentPos}
+            route={trackRoute}
+            markers={trackRoute.length > 0 ? [
+              { lat: trackRoute[0][0], lng: trackRoute[0][1], label: 'Partida', color: '#22c55e' },
+            ] : []}
+            height="250px"
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <Button variant="outline" onClick={() => setShowAbast(true)} className="h-20 flex-col gap-2">
               <Fuel className="h-6 w-6 text-primary" />
@@ -312,14 +359,8 @@ export default function CorridaPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Abastecimento</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>Valor (R$)</Label>
-                <Input type="number" value={abastValor} onChange={(e) => setAbastValor(e.target.value)} placeholder="150.00" />
-              </div>
-              <div className="space-y-1">
-                <Label>Km Atual</Label>
-                <Input type="number" value={abastKm} onChange={(e) => setAbastKm(e.target.value)} placeholder="45500" />
-              </div>
+              <div className="space-y-1"><Label>Valor (R$)</Label><Input type="number" value={abastValor} onChange={(e) => setAbastValor(e.target.value)} placeholder="150.00" /></div>
+              <div className="space-y-1"><Label>Km Atual</Label><Input type="number" value={abastKm} onChange={(e) => setAbastKm(e.target.value)} placeholder="45500" /></div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAbast(false)}>Cancelar</Button>
@@ -332,14 +373,8 @@ export default function CorridaPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Zona Azul</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>Valor (R$)</Label>
-                <Input type="number" value={zonaValor} onChange={(e) => setZonaValor(e.target.value)} placeholder="5.00" />
-              </div>
-              <div className="space-y-1">
-                <Label>Localização</Label>
-                <Input value={zonaLocal} onChange={(e) => setZonaLocal(e.target.value)} placeholder="Rua Augusta, 200" />
-              </div>
+              <div className="space-y-1"><Label>Valor (R$)</Label><Input type="number" value={zonaValor} onChange={(e) => setZonaValor(e.target.value)} placeholder="5.00" /></div>
+              <div className="space-y-1"><Label>Localização</Label><Input value={zonaLocal} onChange={(e) => setZonaLocal(e.target.value)} placeholder="Rua Augusta, 200" /></div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowZona(false)}>Cancelar</Button>
@@ -351,7 +386,6 @@ export default function CorridaPage() {
     );
   }
 
-  // Finalizando
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
@@ -364,6 +398,12 @@ export default function CorridaPage() {
             </h2>
           </CardHeader>
           <CardContent className="space-y-4">
+            {trackRoute.length > 1 && (
+              <div className="space-y-2">
+                <Label>Trajeto Percorrido</Label>
+                <TrackingMap route={trackRoute} currentPosition={currentPos} height="200px" />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Km Final *</Label>
               <Input type="number" value={kmFim} onChange={(e) => setKmFim(e.target.value)} placeholder="Ex: 45280" />
@@ -375,9 +415,7 @@ export default function CorridaPage() {
             <Button onClick={finalizarCorrida} className="w-full gradient-primary text-primary-foreground h-12" disabled={loading}>
               {loading ? 'Finalizando...' : '✅ Finalizar Corrida'}
             </Button>
-            <Button variant="outline" onClick={() => setStep('em_andamento')} className="w-full">
-              Voltar
-            </Button>
+            <Button variant="outline" onClick={() => setStep('em_andamento')} className="w-full">Voltar</Button>
           </CardContent>
         </Card>
       </main>

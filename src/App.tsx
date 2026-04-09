@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VeiculosPage from "./pages/VeiculosPage";
@@ -11,6 +12,7 @@ import ChecklistPage from "./pages/ChecklistPage";
 import CorridaPage from "./pages/CorridaPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsuariosPage from "./pages/AdminUsuariosPage";
+import AdminVeiculosPage from "./pages/AdminVeiculosPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,9 +57,18 @@ function AppRoutes() {
       <Route path="/corrida/:veiculoId" element={<ProtectedRoute><CorridaPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/usuarios" element={<ProtectedRoute adminOnly><AdminUsuariosPage /></ProtectedRoute>} />
+      <Route path="/admin/veiculos" element={<ProtectedRoute adminOnly><AdminVeiculosPage /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to={session ? (profile?.tipo === 'admin' ? '/admin' : '/veiculos') : '/login'} replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+  );
+}
+
+function AuthenticatedApp() {
+  return (
+    <NotificationProvider>
+      <AppRoutes />
+    </NotificationProvider>
   );
 }
 
@@ -68,7 +79,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <AuthenticatedApp />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
